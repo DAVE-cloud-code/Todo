@@ -12,7 +12,7 @@ import {
 } from '@mui/material';
 import { makeStyles } from '@mui/styles';
 
-const BACKEND_URL = 'http://localhost:5001'; // Replace with your production URL when deploying
+const BACKEND_URL = 'https://todo-2-7434.onrender.com'; // Replace with your production URL when deploying
 
 const useStyles = makeStyles({
   container: {
