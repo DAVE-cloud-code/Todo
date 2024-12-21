@@ -9,10 +9,12 @@ import {
   Card,
   CardContent,
   Grid,
+  CircularProgress,
 } from '@mui/material';
 import { makeStyles } from '@mui/styles';
 
-const BACKEND_URL = 'https://todo-2-7434.onrender.com'; // Replace with your production URL when deploying
+const BACKEND_URL = import.meta.env.VITE_BACKEND_URLS; 
+console.log(BACKEND_URL)
 
 const useStyles = makeStyles({
   container: {
@@ -59,6 +61,9 @@ const useStyles = makeStyles({
     marginBottom: '2rem',
     textAlign: 'center',
   },
+  loader: {
+    color: '#fff',
+  },
 });
 
 const HomePage = () => {
@@ -67,6 +72,7 @@ const HomePage = () => {
   const [task, setTask] = useState('');
   const [dueDate, setDueDate] = useState('');
   const [dueTime, setDueTime] = useState('');
+  const [loading, setLoading] = useState(null); // For button loading states
 
   // Request notification permissions on load
   useEffect(() => {
@@ -80,36 +86,12 @@ const HomePage = () => {
     fetchTodos();
   }, []);
 
-  // Notification interval check
-  useEffect(() => {
-    const interval = setInterval(() => {
-      todos.forEach((todo) => {
-        const dueTime = new Date(todo.dueDateTime);
-        const currentTime = new Date();
-        const timeDiff = dueTime - currentTime;
-
-        if (timeDiff > 0 && timeDiff <= 3600000 && !todo.notified) {
-          sendNotification(todo.task);
-
-          // Mark as notified in the database
-          axios
-            .patch(`${BACKEND_URL}/api/todos/${todo._id}`, { notified: true })
-            .catch((error) =>
-              console.error('Error updating notification status:',  error.response?.data || error.message)
-            );
-        }
-      });
-    }, 60000); // Check every minute
-
-    return () => clearInterval(interval);
-  }, [todos]);
-
   const fetchTodos = async () => {
     try {
       const response = await axios.get(`${BACKEND_URL}/api/todos`);
       setTodos(response.data || []);
     } catch (error) {
-      console.error('Error fetching todos:',  error.response?.data || error.message);
+      console.error('Error fetching todos:', error.response?.data || error.message);
       toast.error('Failed to fetch todos');
     }
   };
@@ -127,42 +109,56 @@ const HomePage = () => {
       dueDateTime: new Date(`${dueDate} ${dueTime}`),
     };
 
-    try {
-      await axios.post(`${BACKEND_URL}/api/todos`, todoData);
-      toast.success('Todo added successfully');
-      setTask('');
-      setDueDate('');
-      setDueTime('');
-      fetchTodos();
-    } catch (error) {
-      console.error('Error adding todo:', error.response?.data || error.message);
-      toast.error('Failed to add todo');
-    }
+    setLoading('add');
+    setTimeout(async () => {
+      try {
+        await axios.post(`${BACKEND_URL}/api/todos`, todoData);
+        toast.success('Todo added successfully');
+        setTask('');
+        setDueDate('');
+        setDueTime('');
+        fetchTodos();
+      } catch (error) {
+        console.error('Error adding todo:', error.response?.data || error.message);
+        toast.error('Failed to add todo');
+      } finally {
+        setLoading(null);
+      }
+    }, 10000); // Delay for 10 seconds
   };
 
   const handleDelete = async (id) => {
-    try {
-      await axios.delete(`${BACKEND_URL}/api/todos/${id}`);
-      toast.success('Todo deleted successfully');
-      fetchTodos();
-    } catch (error) {
-      console.error('Error deleting todo:',  error.response?.data || error.message);
-      toast.error('Failed to delete todo');
-    }
+    setLoading(`delete-${id}`);
+    setTimeout(async () => {
+      try {
+        await axios.delete(`${BACKEND_URL}/api/todos/${id}`);
+        toast.success('Todo deleted successfully');
+        fetchTodos();
+      } catch (error) {
+        console.error('Error deleting todo:', error.response?.data || error.message);
+        toast.error('Failed to delete todo');
+      } finally {
+        setLoading(null);
+      }
+    }, 10000); // Delay for 10 seconds
   };
 
   const handleComplete = async (id, task) => {
-    try {
-      await axios.delete(`${BACKEND_URL}/api/todos/${id}`);
-      toast.success(`Todo "${task}" marked as completed`);
-      fetchTodos();
-    } catch (error) {
-      console.error('Error marking todo as completed:', error);
-      toast.error('Failed to mark todo as completed');
-    }
+    setLoading(`complete-${id}`);
+    setTimeout(async () => {
+      try {
+        await axios.delete(`${BACKEND_URL}/api/todos/${id}`);
+        toast.success(`Todo "${task}" marked as completed`);
+        fetchTodos();
+      } catch (error) {
+        console.error('Error marking todo as completed:', error);
+        toast.error('Failed to mark todo as completed');
+      } finally {
+        setLoading(null);
+      }
+    }, 10000); // Delay for 10 seconds
   };
 
-  // Function to Send Notification via Service Worker
   const sendNotification = (task) => {
     if ('serviceWorker' in navigator && 'Notification' in window) {
       navigator.serviceWorker.ready.then((registration) => {
@@ -213,8 +209,13 @@ const HomePage = () => {
           required
         />
 
-        <Button type="submit" variant="contained" className={classes.button}>
-          Add Todo
+        <Button
+          type="submit"
+          variant="contained"
+          className={classes.button}
+          disabled={loading === 'add'}
+        >
+          {loading === 'add' ? <CircularProgress size={24} className={classes.loader} /> : 'Add Todo'}
         </Button>
       </form>
 
@@ -233,17 +234,27 @@ const HomePage = () => {
                   variant="contained"
                   className={classes.completeButton}
                   onClick={() => handleComplete(todo._id, todo.task)}
+                  disabled={loading === `complete-${todo._id}`}
                   style={{ marginTop: '1rem', marginRight: '0.5rem' }}
                 >
-                  Mark as Completed
+                  {loading === `complete-${todo._id}` ? (
+                    <CircularProgress size={24} className={classes.loader} />
+                  ) : (
+                    'Mark as Completed'
+                  )}
                 </Button>
                 <Button
                   variant="contained"
                   className={classes.deleteButton}
                   onClick={() => handleDelete(todo._id)}
+                  disabled={loading === `delete-${todo._id}`}
                   style={{ marginTop: '1rem' }}
                 >
-                  Delete
+                  {loading === `delete-${todo._id}` ? (
+                    <CircularProgress size={24} className={classes.loader} />
+                  ) : (
+                    'Delete'
+                  )}
                 </Button>
               </CardContent>
             </Card>
