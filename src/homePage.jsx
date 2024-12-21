@@ -95,7 +95,7 @@ const HomePage = () => {
           axios
             .patch(`${BACKEND_URL}/api/todos/${todo._id}`, { notified: true })
             .catch((error) =>
-              console.error('Error updating notification status:', error)
+              console.error('Error updating notification status:',  error.response?.data || error.message)
             );
         }
       });
@@ -109,7 +109,7 @@ const HomePage = () => {
       const response = await axios.get(`${BACKEND_URL}/api/todos`);
       setTodos(response.data || []);
     } catch (error) {
-      console.error('Error fetching todos:', error);
+      console.error('Error fetching todos:',  error.response?.data || error.message);
       toast.error('Failed to fetch todos');
     }
   };
@@ -135,7 +135,7 @@ const HomePage = () => {
       setDueTime('');
       fetchTodos();
     } catch (error) {
-      console.error('Error adding todo:', error);
+      console.error('Error adding todo:', error.response?.data || error.message);
       toast.error('Failed to add todo');
     }
   };
@@ -146,7 +146,7 @@ const HomePage = () => {
       toast.success('Todo deleted successfully');
       fetchTodos();
     } catch (error) {
-      console.error('Error deleting todo:', error);
+      console.error('Error deleting todo:',  error.response?.data || error.message);
       toast.error('Failed to delete todo');
     }
   };
