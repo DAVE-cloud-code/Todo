@@ -14,8 +14,6 @@ import {
 import { makeStyles } from '@mui/styles';
 
 const BACKEND_URL = import.meta.env.VITE_BACKEND_URLS; 
-console.log(BACKEND_URL)
-
 const useStyles = makeStyles({
   container: {
     marginTop: '2rem',
@@ -124,7 +122,7 @@ const HomePage = () => {
       } finally {
         setLoading(null);
       }
-    }, 10000); // Delay for 10 seconds
+    }, 5000); // Delay for 10 seconds
   };
 
   const handleDelete = async (id) => {
@@ -140,7 +138,7 @@ const HomePage = () => {
       } finally {
         setLoading(null);
       }
-    }, 10000); // Delay for 10 seconds
+    }, 5000); // Delay for 10 seconds
   };
 
   const handleComplete = async (id, task) => {
@@ -156,7 +154,7 @@ const HomePage = () => {
       } finally {
         setLoading(null);
       }
-    }, 10000); // Delay for 10 seconds
+    }, 5000); // Delay for 10 seconds
   };
 
   const sendNotification = (task) => {
