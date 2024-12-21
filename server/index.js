@@ -13,9 +13,15 @@ app.use('/api/todos', todoRoutes);
 
 // MongoDB connection using environment variable
 const mongoURI = process.env.MONGODB_URI;
-mongoose.connect(mongoURI)
-  .then(() => console.log('Connected to MongoDB atlas'))
-  .catch((err) => console.error('MongoDB connection error:', err));
+mongoose.connect(mongoURI, {
+  serverSelectionTimeoutMS: 30000, // 30 seconds
+  socketTimeoutMS: 45000, // 45 seconds
+})
+  .then(() => console.log('MongoDB connected successfully!'))
+  .catch((err) => {
+    console.error('MongoDB connection error:', err);
+    process.exit(1); // Exit the application if the connection fails
+  });
 
 // Server setup using environment variable
 const PORT = process.env.PORT || 5000;
